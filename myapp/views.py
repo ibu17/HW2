@@ -8,14 +8,17 @@ from django.views.decorators.csrf import csrf_exempt
 @csrf_exempt
 def add_user(request):
     if request.method == "POST":
-        user_data = json.loads(request.body)
+        data = request.body.decode()
+        user_data = json.loads(data, strict=False)
+        if isinstance(user_data, str):
+            user_data = json.loads(user_data)
         user_name = user_data.get('user_name')
         age = user_data.get('age')
         sex = user_data.get('sex')
 
         if not user_name or not age or not sex:
             return JsonResponse({'error': 'All fields are required.'}, status=400)
-        user = User.objects.create(user_name=user_name,age=age,sex=sex)
+        User.objects.create(user_name=user_name,age=age,sex=sex)
         return JsonResponse({'massage':'User registered seccessfully.'},status=201)
     return JsonResponse({'error':'Invalid request method.'},status=405)
 
@@ -32,7 +35,7 @@ def user_list(request):
 @csrf_exempt
 def delete_user(request,user_id):
     try:
-        user = User.objects.get(user_id=user_id)
+        user = User.objects.get(id=user_id)
     except User.DoesNotExist:
         return JsonResponse({'error': 'User not found.'}, status=404)
     
@@ -45,12 +48,16 @@ def delete_user(request,user_id):
 @csrf_exempt
 def data_update(request,user_id):
     try:
-        user = User.objects.get(user_id=user_id)
+        user = User.objects.get(id=user_id)
     except User.DoesNotExist:
         return JsonResponse({'error':'User not found'})
     
     if request.method == "PUT":
-        user_data = json.loads(request.body)
+        data = request.body.decode()
+        user_data = json.loads(data, strict=False)
+        if isinstance(user_data, str):
+            user_data = json.loads(user_data)
+            
         user_name = user_data.get('user_name')
         age = user_data.get('age')
         sex = user_data.get('sex')
